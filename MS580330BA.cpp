@@ -117,6 +117,7 @@ void MS580330BA::requestData(uint8_t cmd_, bool Timer_){
     */
     //Send the command to the chip
     // resetSensor();
+    useTimer = Timer_;
     Wire.beginTransmission(sensorAddr);
     Wire.write(cmd_);
     Wire.endTransmission();
@@ -159,12 +160,20 @@ int32_t MS580330BA::getRawData(){
     return (MSB << 16) + (LSB2 << 8) + LSB;
 }
 
+void MS580330BA::getD1Value(){
+     D1 = getRawData(); //D1 is a digital pressure value
+}
+void MS580330BA::getD2Value(){
+     D2 = getRawData(); //D2 is a digital pressure value
+}
 void MS580330BA::sensorCalculation(){
 
-    requestData(pressureResolution); 
-    D1 = getRawData(); //D1 is a digital pressure value
-    requestData(tempResolution);
-    D2 = getRawData(); //D2 is a digital temperature value
+    if(!useTimer){
+        requestData(pressureResolution); 
+        D1 = getRawData(); //D1 is a digital pressure value
+        requestData(tempResolution);
+        D2 = getRawData(); //D2 is a digital temperature value
+    }
 
     dT =  D2 - (calibrationCoeff[5] * pow(2, 8));
     TEMP = 2000 + (dT * calibrationCoeff[6]) / pow(2, 23);

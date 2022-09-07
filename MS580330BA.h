@@ -31,6 +31,8 @@ class MS580330BA{
         void initialSensor();
         void resetSensor();
         bool init_status;
+        void getD1Value();
+        void getD2Value();
         void sensorCalculation();
         void requestData(uint8_t cmd_, bool Timer_=false);
         int32_t getPressure();
@@ -38,6 +40,7 @@ class MS580330BA{
         int32_t getRawData();
 
     private:
+        bool useTimer;
         uint32_t D1 = 0;
         uint32_t D2 = 0;
         int32_t dT = 0;
