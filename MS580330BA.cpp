@@ -43,6 +43,7 @@ void MS580330BA::initialSensor(){
     */
     Wire.begin();
     resetSensor();
+
     for (byte addr=0; addr<8; addr++){
         // byte MSB = 0x00;
         // byte LSB = 0x00;
@@ -107,37 +108,43 @@ unsigned char MS580330BA::ms5803CRC(uint16_t n_prom[]){
     return (n_rem ^ 0x00);
 }
 
-int32_t MS580330BA::requestData(uint8_t cmd_){
+void MS580330BA::requestData(uint8_t cmd_, bool Timer_){
     /*!
         @param cmd_
         command for reading the pressure or temperature data from the sensor
+        @param Timer_
+        Timer status, (Default False), If it true mean this function called by Timer
     */
     //Send the command to the chip
-    resetSensor();
+    // resetSensor();
     Wire.beginTransmission(sensorAddr);
     Wire.write(cmd_);
     Wire.endTransmission();
 
     //Define the delay as a response time in the figure.1 in datasheet
     //0.5 / 1.1 / 2.1 / 4.1 /8.22
-    switch (cmd_ & 0x0f){
-        case 0:
-            delay(1);
-            break;
-        case 2:
-            delay(2);
-            break;
-        case 4:
-            delay(3);
-            break;
-        case 6:
-            delay(5);
-            break;
-        case 8:
-            delay(9);
-            break;
-   }
-   //Ready to send the read command to chip
+    if(!Timer_){
+        switch (cmd_ & 0x0f){
+            case 0:
+                delay(1);
+                break;
+            case 2:
+                delay(2);
+                break;
+            case 4:
+                delay(3);
+                break;
+            case 6:
+                delay(5);
+                break;
+            case 8:
+                delay(9);
+                break;
+        }
+    }
+}
+
+int32_t MS580330BA::getRawData(){
     Wire.beginTransmission(sensorAddr);
     Wire.write(ADC_READ);
     Wire.endTransmission();
@@ -151,10 +158,13 @@ int32_t MS580330BA::requestData(uint8_t cmd_){
 
     return (MSB << 16) + (LSB2 << 8) + LSB;
 }
+
 void MS580330BA::sensorCalculation(){
 
-    D1 = requestData(pressureResolution); //D1 is a digital pressure value
-    D2 = requestData(tempResolution); //D1 is a digital temperature value
+    requestData(pressureResolution); 
+    D1 = getRawData(); //D1 is a digital pressure value
+    requestData(tempResolution);
+    D2 = getRawData(); //D2 is a digital temperature value
 
     dT =  D2 - (calibrationCoeff[5] * pow(2, 8));
     TEMP = 2000 + (dT * calibrationCoeff[6]) / pow(2, 23);
