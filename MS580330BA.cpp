@@ -164,7 +164,7 @@ void MS580330BA::getD1Value(){
      D1 = getRawData(); //D1 is a digital pressure value
 }
 void MS580330BA::getD2Value(){
-     D2 = getRawData(); //D2 is a digital pressure value
+     D2 = getRawData(); //D2 is a digital temperature value
 }
 void MS580330BA::sensorCalculation(){
 
