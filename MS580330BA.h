@@ -24,6 +24,11 @@ Initial paramertes
 Pressure resolution (D1) OSR - 1024 = 1 mbar
 Temperature resolution (D2) OSR - 1024 = 0.005 degs
 */
+enum measurement
+{
+	TEMPERATURE,
+	PRESSURE,
+};
 
 class MS580330BA{
     public:
@@ -34,7 +39,7 @@ class MS580330BA{
         void getD1Value();
         void getD2Value();
         void sensorCalculation();
-        void requestData(uint8_t cmd_, bool Timer_=false);
+        void requestData(measurement sensor_= PRESSURE, bool Timer_=false);
         float getPressure();
         float getTemperature();
         uint32_t getRawData();
@@ -46,11 +51,10 @@ class MS580330BA{
         uint8_t sensorAddr;
         float tempData = 0;
         float pressureData = 0;
-        uint8_t pressureResolution;
-        uint8_t tempResolution;
+        uint8_t pressureCommand;
+        uint8_t tempCommand;
         uint16_t calibrationCoeff[8];
         unsigned char ms5803CRC(uint16_t n_prom[]);
-
 };
 
 #endif /*__MS580330BA_H__*/

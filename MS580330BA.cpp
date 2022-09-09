@@ -33,8 +33,8 @@ MS580330BA::MS580330BA(uint8_t address_, uint16_t pressure_res, uint16_t temp_re
         }
     }
     init_status = pressureBool && tempBool;
-    pressureResolution = 0x40 + (pressure_res / 256); //@256 hex value is 0x40, the next is +2 (0x42)
-    tempResolution = 0x50 + (temp_res / 256);
+    pressureCommand = 0x40 + (pressure_res / 256); //@256 hex value is 0x40, the next is +2 (0x42)
+    tempCommand = 0x50 + (temp_res / 256);
 }
 
 void MS580330BA::initialSensor(){
@@ -107,15 +107,22 @@ unsigned char MS580330BA::ms5803CRC(uint16_t n_prom[]){
     return (n_rem ^ 0x00);
 }
 
-void MS580330BA::requestData(uint8_t cmd_, bool Timer_){
+void MS580330BA::requestData(measurement sensor_, bool Timer_){
     /*!
-        @param cmd_
-        command for reading the pressure or temperature data from the sensor
+        @param sensor_
+        command for selecting the pressure or temperature data from the sensor
         @param Timer_
         Timer status, (Default False), If it true mean this function called by Timer
     */
     //Send the command to the chip
     // resetSensor();
+    uint8_t cmd_;
+
+    if(sensor_ == TEMPERATURE){
+        cmd_ = tempCommand;
+    }else{
+        cmd_ = pressureCommand;
+    }
     useTimer = Timer_;
     Wire.beginTransmission(sensorAddr);
     Wire.write(cmd_);
@@ -123,7 +130,7 @@ void MS580330BA::requestData(uint8_t cmd_, bool Timer_){
 
     //Define the delay as a response time in the figure.1 in datasheet
     //0.5 / 1.1 / 2.1 / 4.1 /8.22
-    if(!Timer_){
+    if(!useTimer){
         switch (cmd_ & 0x0f){
             case 0:
                 delay(1);
@@ -157,9 +164,8 @@ uint32_t MS580330BA::getRawData(){
         LSB2 = Wire.read();
         LSB = Wire.read();
     }
-
-    // return (MSB << 16) + (LSB2 << 8) + LSB;
-    return  (MSB << 16) + (LSB2 << 8) + LSB;;
+    
+    return  (MSB << 16) + (LSB2 << 8) + LSB;
 }
 
 void MS580330BA::getD1Value(){
@@ -171,9 +177,9 @@ void MS580330BA::getD2Value(){
 void MS580330BA::sensorCalculation(){
 
     if(!useTimer){
-        requestData(pressureResolution); 
+        requestData(PRESSURE, pressureCommand); 
         D1 = getRawData(); //D1 is a digital pressure value
-        requestData(tempResolution);
+        requestData(TEMPERATURE, tempCommand);
         D2 = getRawData(); //D2 is a digital temperature value
     }
 
