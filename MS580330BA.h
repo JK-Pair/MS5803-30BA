@@ -35,27 +35,17 @@ class MS580330BA{
         void getD2Value();
         void sensorCalculation();
         void requestData(uint8_t cmd_, bool Timer_=false);
-        int32_t getPressure();
-        int32_t getTemperature();
-        int32_t getRawData();
+        float getPressure();
+        float getTemperature();
+        uint32_t getRawData();
 
     private:
         bool useTimer;
         uint32_t D1 = 0;
         uint32_t D2 = 0;
-        int32_t dT = 0;
-        int32_t TEMP = 0;
-        int64_t OFF = 0;
-        int64_t SENS = 0;
-        int32_t T2 = 0;
-        int32_t OFF2 = 0;
-        int32_t SENS2 = 0;
-        byte MSB = 0x00;
-        byte LSB = 0x00;
-        byte LSB2 = 0x00;
         uint8_t sensorAddr;
-        int32_t tempData = 0;
-        int32_t pressureData = 0;
+        float tempData = 0;
+        float pressureData = 0;
         uint8_t pressureResolution;
         uint8_t tempResolution;
         uint16_t calibrationCoeff[8];
