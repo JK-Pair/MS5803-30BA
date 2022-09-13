@@ -183,29 +183,29 @@ void MS580330BA::sensorCalculation(){
         D2 = getRawData(); //D2 is a digital temperature value
     }
 
-    int32_t dT =  D2 - (calibrationCoeff[5] * pow(2, 8));
-    int32_t TEMP = 2000 + ((int64_t)dT * calibrationCoeff[6]) / pow(2, 23);
+    int32_t dT =  D2 - (calibrationCoeff[5] * POW_2_8);
+    int32_t TEMP = 2000 + ((int64_t)dT * calibrationCoeff[6]) / POW_2_23;
 
-    int64_t OFF = (calibrationCoeff[2] * pow(2, 16)) + ((calibrationCoeff[4] * (int64_t)dT) / pow(2,7));
-    int64_t SENS = (calibrationCoeff[1] * pow(2, 15)) + ((calibrationCoeff[3] * (int64_t)dT) / pow(2,8));
+    int64_t OFF = (calibrationCoeff[2] * POW_2_16) + ((calibrationCoeff[4] * (int64_t)dT) / POW_2_7);
+    int64_t SENS = (calibrationCoeff[1] * POW_2_15) + ((calibrationCoeff[3] * (int64_t)dT) / POW_2_8);
 
     int64_t T2 = 0;
     int64_t OFF2 = 0;
     int64_t SENS2 = 0;
 
     if (TEMP < 2000){
-        T2 = 3 * pow((int64_t)dT, 2) / pow(2,33);
-        OFF2 = 3 * pow((TEMP - 2000), 2) / 2;
-        SENS2 = 5 * pow((TEMP - 2000), 2) / pow(2,3);
+        T2 = 3 * ((int64_t)dT * (int64_t)dT) / POW_2_33;
+        OFF2 = 3 * ((TEMP - 2000) * (TEMP - 2000)) / 2;
+        SENS2 = 5 * ((TEMP - 2000) * (TEMP - 2000)) / 8;
 
         if (TEMP < -1500){
-            OFF2 = OFF2 + 7 * pow((TEMP + 1500), 2);
-            SENS2 = SENS2 + 4 * pow((TEMP + 1500), 2);
+            OFF2 = OFF2 + 7 * ((TEMP + 1500) * (TEMP + 1500));
+            SENS2 = SENS2 + 4 * ((TEMP + 1500) * (TEMP + 1500));
         }
 
     }else{
-        T2 = 7 * pow((int64_t)dT, 2) / pow(2,37);
-        OFF2 = 1 * pow((TEMP - 2000), 2) / pow(2,4);
+        T2 = 7 * ((int64_t)dT * (int64_t)dT) / POW_2_37;
+        OFF2 = 1 * ((TEMP - 2000) * (TEMP - 2000)) / POW_2_4;
         SENS2 = 0;
     }
 
@@ -213,7 +213,7 @@ void MS580330BA::sensorCalculation(){
     OFF = OFF - OFF2;
     SENS = SENS - SENS2;
 
-    pressureData = (D1 * SENS / pow(2,21) - OFF) / pow(2,13);
+    pressureData = (D1 * SENS / POW_2_21 - OFF) / POW_2_13;
     tempData = TEMP;
 }
 float MS580330BA::getPressure(){

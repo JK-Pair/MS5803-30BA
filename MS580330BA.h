@@ -8,7 +8,7 @@ https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm
 #define __MS580330BA_H__
 
 #include "Arduino.h"
-#include "math.h"
+// #include "math.h"
 // #include "WireBase.h"
 #include "Wire.h"
 
@@ -28,6 +28,20 @@ enum measurement
 {
 	TEMPERATURE,
 	PRESSURE,
+};
+
+enum MATH_POW
+{
+    POW_2_4 = 16,
+    POW_2_7 = 128,
+	POW_2_8 = 256,
+	POW_2_13 = 8192,
+	POW_2_15 = 32768,
+	POW_2_16 = 65536,
+	POW_2_21 = 2097152,
+	POW_2_23 = 8388608,
+	POW_2_33 = 8589934592,
+	POW_2_37 = 137438953472,
 };
 
 class MS580330BA{
@@ -55,6 +69,7 @@ class MS580330BA{
         uint8_t tempCommand;
         uint16_t calibrationCoeff[8];
         unsigned char ms5803CRC(uint16_t n_prom[]);
+
 };
 
 #endif /*__MS580330BA_H__*/
