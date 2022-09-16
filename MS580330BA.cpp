@@ -18,8 +18,10 @@ https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm
  *          Temperature resolution @256, 512, 1024, 2048, 4096
  */
 
-MS580330BA::MS580330BA(uint8_t address_, uint16_t pressure_res, uint16_t temp_res){
+MS580330BA::MS580330BA(uint8_t address_, uint16_t pressure_res, uint16_t temp_res, TwoWire *theWire){
     sensorAddr = address_;
+    i2c_pressure = new Adafruit_I2CDevice(sensorAddr, theWire);
+
     init_status = false;
     bool pressureBool = false;
     bool tempBool = false;
@@ -41,22 +43,16 @@ void MS580330BA::initialSensor(){
     /*To read the content of the calibration PROM and to calculate the calibration coefficients.
         PROM Read: 0xA0 to 0xAE
     */
-    Wire.begin();
+    if(!i2c_pressure->begin()){
+        init_status = false;
+    }
+    i2c_pressure->setSpeed(400000);
     resetSensor();
 
     for (byte addr=0; addr<8; addr++){
-        byte MSB = 0x00;
-        byte LSB = 0x00;
-
-        Wire.beginTransmission(sensorAddr);
-        Wire.write(0xA0 + (addr * 2));
-        Wire.endTransmission();
-        Wire.requestFrom(sensorAddr, 2);
-        while(Wire.available() == 2){
-            MSB = Wire.read();
-            LSB = Wire.read();
-        }
-        calibrationCoeff[addr] = (MSB << 8) + LSB;
+        uint8_t buffer[2];
+        readI2C((0xA0 + (addr * 2)), buffer, 2);
+        calibrationCoeff[addr] = (buffer[0] << 8) + buffer[1];
     }
 
     unsigned char memoryCRC = calibrationCoeff[7];
@@ -68,10 +64,21 @@ void MS580330BA::initialSensor(){
     }
 }
 
+bool MS580330BA::i2cDetect(){
+    return i2c_pressure->detected();
+}
+bool MS580330BA::writeI2C(uint8_t address_){
+    uint8_t buffer[1] = {address_};
+    return i2c_pressure->write(buffer,2);
+}
+
+bool MS580330BA::readI2C(byte address_, uint8_t *buffer, uint8_t size_){
+    uint8_t writeBuffer[1] = {address_};
+    return i2c_pressure->write_then_read(writeBuffer, 1, buffer, size_);
+}
+
 void MS580330BA::resetSensor(){
-    Wire.beginTransmission(sensorAddr);
-    Wire.write(RESET_CMD);
-    Wire.endTransmission();
+    writeI2C(RESET_CMD);
     delay(10);
 }
 
@@ -124,9 +131,10 @@ void MS580330BA::requestData(measurement sensor_, bool Timer_){
         cmd_ = pressureCommand;
     }
     useTimer = Timer_;
-    Wire.beginTransmission(sensorAddr);
-    Wire.write(cmd_);
-    Wire.endTransmission();
+    // Wire.beginTransmission(sensorAddr);
+    // Wire.write(cmd_);
+    // Wire.endTransmission();
+    writeI2C(cmd_);
 
     //Define the delay as a response time in the figure.1 in datasheet
     //0.5 / 1.1 / 2.1 / 4.1 /8.22
@@ -152,28 +160,20 @@ void MS580330BA::requestData(measurement sensor_, bool Timer_){
 }
 
 uint32_t MS580330BA::getRawData(){
-    Wire.beginTransmission(sensorAddr);
-    Wire.write(ADC_READ);
-    Wire.endTransmission();
-    Wire.requestFrom(sensorAddr, 3);
-    byte MSB = 0x00;
-    byte LSB = 0x00;
-    byte LSB2 = 0x00;
-    while(Wire.available() == 3){
-        MSB = Wire.read();
-        LSB2 = Wire.read();
-        LSB = Wire.read();
-    }
-    
-    return  (MSB << 16) + (LSB2 << 8) + LSB;
+    uint32_t result = 0;
+    uint8_t buffer[3];
+    readI2C(ADC_READ, buffer, 3); 
+    result = ((uint32_t)buffer[0] << 16) + ((uint16_t)buffer[1] << 8) + buffer[2];;
+    return result;
 }
 
 void MS580330BA::getD1Value(){
     D1 = getRawData(); //D1 is a digital pressure value
 }
 void MS580330BA::getD2Value(){
-    D2 = getRawData(); //D2 is a digital pressure value
+    D2 = getRawData(); //D2 is a digital temperature value
 }
+
 void MS580330BA::sensorCalculation(){
 
     if(!useTimer){
@@ -215,6 +215,18 @@ void MS580330BA::sensorCalculation(){
 
     pressureData = (D1 * SENS / POW_2_21 - OFF) / POW_2_13;
     tempData = TEMP;
+
+    ///Reset parameters
+    D1 = 0;
+    D2 = 0;
+    dT = 0;
+    TEMP = 0;
+    OFF = 0;
+    SENS = 0;
+    T2 = 0;
+    OFF2 = 0;
+    SENS2 = 0;
+    /////////////////////////////////////
 }
 float MS580330BA::getPressure(){
     int32_t P_MIN = 0; //mbar
@@ -224,7 +236,7 @@ float MS580330BA::getPressure(){
     if ((pressureData >= P_MIN) && (pressureData <= P_MAX)){
         return pressureData; //mbar
     }else{
-        return 99;
+        return 99.0;
     }
 }
 float MS580330BA::getTemperature(){
@@ -234,6 +246,6 @@ float MS580330BA::getTemperature(){
     if ((tempData >= T_MIN) && (tempData <= T_MAX)){
         return tempData; //Celsius
     }else{
-        return 99;
+        return 99.0;
     }
 }

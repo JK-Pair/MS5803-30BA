@@ -10,8 +10,9 @@ https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm
 #include "Arduino.h"
 // #include "math.h"
 // #include "WireBase.h"
-#include "Wire.h"
-
+// #include "Wire.h"
+#include <Adafruit_I2CDevice.h>
+#include <SPI.h>
 // MS5803-30BA Address A 
 #define MS5803_ADDRESS_A 0x76
 // MS5803-30BA Address B
@@ -46,7 +47,7 @@ enum MATH_POW
 
 class MS580330BA{
     public:
-        MS580330BA(uint8_t address_ = MS5803_ADDRESS_A, uint16_t pressure_res = 1024, uint16_t temp_res = 1024);
+        MS580330BA(uint8_t address_ = MS5803_ADDRESS_A, uint16_t pressure_res = 1024, uint16_t temp_res = 1024, TwoWire *theWire = &Wire);
         void initialSensor();
         void resetSensor();
         bool init_status;
@@ -57,6 +58,7 @@ class MS580330BA{
         float getPressure();
         float getTemperature();
         uint32_t getRawData();
+        bool i2cDetect();
 
     private:
         bool useTimer;
@@ -69,6 +71,10 @@ class MS580330BA{
         uint8_t tempCommand;
         uint16_t calibrationCoeff[8];
         unsigned char ms5803CRC(uint16_t n_prom[]);
+
+        bool writeI2C(uint8_t address_);
+        bool readI2C(uint8_t address_, byte *buffer, byte size_);
+        Adafruit_I2CDevice *i2c_pressure = NULL; ///< Pointer to I2C bus interface
 
 };
 
