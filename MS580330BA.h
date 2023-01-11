@@ -8,7 +8,7 @@ https://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&DocNm
 #define __MS580330BA_H__
 
 #include "Arduino.h"
-#include "math.h"
+// #include "math.h"
 // #include "WireBase.h"
 #include "Wire.h"
 
@@ -24,6 +24,25 @@ Initial paramertes
 Pressure resolution (D1) OSR - 1024 = 1 mbar
 Temperature resolution (D2) OSR - 1024 = 0.005 degs
 */
+enum measurement
+{
+	TEMPERATURE,
+	PRESSURE,
+};
+
+enum MATH_POW
+{
+    POW_2_4 = 16,
+    POW_2_7 = 128,
+	POW_2_8 = 256,
+	POW_2_13 = 8192,
+	POW_2_15 = 32768,
+	POW_2_16 = 65536,
+	POW_2_21 = 2097152,
+	POW_2_23 = 8388608,
+	POW_2_33 = 8589934592,
+	POW_2_37 = 137438953472,
+};
 
 class MS580330BA{
     public:
@@ -31,29 +50,23 @@ class MS580330BA{
         void initialSensor();
         void resetSensor();
         bool init_status;
+        void getD1Value();
+        void getD2Value();
         void sensorCalculation();
-        int32_t getPressure();
-        int32_t getTemperature();
-        int32_t requestData(uint8_t cmd_);
+        void requestData(measurement sensor_= PRESSURE, bool Timer_=false);
+        float getPressure();
+        float getTemperature();
+        uint32_t getRawData();
 
     private:
+        bool useTimer;
         uint32_t D1 = 0;
         uint32_t D2 = 0;
-        int32_t dT = 0;
-        int32_t TEMP = 0;
-        int64_t OFF = 0;
-        int64_t SENS = 0;
-        int32_t T2 = 0;
-        int32_t OFF2 = 0;
-        int32_t SENS2 = 0;
-        byte MSB = 0x00;
-        byte LSB = 0x00;
-        byte LSB2 = 0x00;
         uint8_t sensorAddr;
-        int32_t tempData = 0;
-        int32_t pressureData = 0;
-        uint8_t pressureResolution;
-        uint8_t tempResolution;
+        float tempData = 0;
+        float pressureData = 0;
+        uint8_t pressureCommand;
+        uint8_t tempCommand;
         uint16_t calibrationCoeff[8];
         unsigned char ms5803CRC(uint16_t n_prom[]);
 
