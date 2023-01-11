@@ -58,10 +58,6 @@ class MS580330BA{
         float getPressure();
         float getTemperature();
         uint32_t getRawData();
-<<<<<<< HEAD
-=======
-        bool i2cDetect();
->>>>>>> fe4c094139289f8c2f4cbcd6fe39538087293b3f
 
     private:
         bool useTimer;
